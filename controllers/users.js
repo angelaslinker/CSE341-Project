@@ -11,12 +11,17 @@ const getAll = async (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json(users);
     });
-
 }
 
 const getSingle = async (req, res) => {
+    if (!ObjectId.isValid(req.params.id)) {
+        res.status(400).json('Must use a valid contact id to find a user.');
+        return; // Add return statement to exit the function
+    }
+    console.log('lska;jdg');
+
     //#swagger-tags=['Users']
-    const userId = new ObjectId(req.ObjectId);
+    const userId = new ObjectId(req.params.id);
     const result = await mongodb.getDatabase().db().collection('users').find({ _id: userId });
     result.toArray().then((users) => {
         res.setHeader('Content-Type', 'application/json');
@@ -27,21 +32,23 @@ const getSingle = async (req, res) => {
 const createUser = async (req, res) => {
     //#swagger-tags=['Users']
     const user = {
-        firstname: req.body.firstName,
-        lastName: req.body.lastName,
+        name: req.body.name,
+        username: req.body.username,
         email: req.body.email,
-        favoriteColor: req.body.favoriteColor,
-        birthday: req.body.birthday
     };
-    const response = await mongodb.getDatabase().db().collection('users').replaceOne({ _id: userId });
-    if (response.modifiedCount > 0) {
-        res.status(204).send();
+    const response = await mongodb.getDatabase().db().collection('users').insertOne(user); // Use insertOne to create a new user
+    if (response.insertedCount > 0) {
+        res.status(201).json({ message: 'User created successfully' });
     } else {
-        res.status(500).json(response.error || 'Some error ocurred while updating the user');
+        res.status(500).json(response.error || 'Some error occurred while creating the user');
     }
 };
 
+
 const updateUser = async (req, res) => {
+    if (!ObjectId.isValid(req.params.id)) {
+        res.status(400).json('Must use a valid contact id to update a user.');
+    }
     //#swagger-tags=['Users']
     const userId = new ObjectId(req.params.id);
     const user = {
@@ -59,6 +66,9 @@ const updateUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
+    if (!ObjectId.isValid(req.params.id)) {
+        res.status(400).json('Must use a valid contact id to delete a user.');
+    }
     //#swagger-tags=['Users']
     const userId = new ObjectId(req.params.id);
     const response = await mongodb.getDatabase().db().collection('users').remove({ _id: userId }, true);
